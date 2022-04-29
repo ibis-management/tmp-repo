@@ -1,0 +1,32 @@
+{
+  "name": "ynohub-service",
+  "version": "1.0.0",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "dev": "nodemon --watch src src/index",
+    "start": "node src/index"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "nodemon": "^2.0.15"
+  },
+  "dependencies": {
+    "axios": "^0.26.1",
+    "dotenv": "^16.0.0",
+    "express": "^4.18.0",
+    "express-winston": "^4.2.0",
+    "express-xml-bodyparser": "^0.3.0",
+    "lodash": "^4.17.21",
+    "lodash-es": "^4.17.21",
+    "minimist": "^1.2.6",
+    "pino": "^7.11.0",
+    "pino-http": "^7.0.0",
+    "pino-pretty": "^7.6.1",
+    "redis": "^4.0.6",
+    "redis-om": "^0.2.1",
+    "uuid": "^8.3.2",
+    "winston": "^3.7.2",
+    "xml2js": "^0.4.23"
+  }
+}
