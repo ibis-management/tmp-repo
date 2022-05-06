@@ -36,6 +36,10 @@ const createConsumer = async (key, group, consumer) => {
   }
 };
 
+export const saveRequest = async (data) => {
+  await client.xAdd("alchemy-request", "*", { payload: JSON.stringify(data) });
+};
+
 export default async (key, group, consumer, ack = true) => {
   const groupOK = await createGroup(key, group);
   if (!groupOK) return {};
