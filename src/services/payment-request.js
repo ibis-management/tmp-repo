@@ -26,7 +26,8 @@ export const paymentRequestInit = async (payreq) => {
   const ynohubId = uuidv4();
   const body = { ...payreq, ynohubId };
 
-  const data = await validate(body);
+  // const data = await validate(body);
 
-  return data;
+  // return data;
+  return body;
 };
