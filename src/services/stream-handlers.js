@@ -44,15 +44,18 @@ export const statusHandler = async (streamData) => {
     default:
       status = getStatus(ynohubId, event);
 
-      await ack(streamId);
       break;
   }
 
-  const resp = await alchemy.request("", "POST", status, "xml");
-  console.log(
-    "LOG:  ~ file: stream-handlers.js ~ line 52 ~ statusHandler ~ resp",
-    resp
-  );
-
-  logger.info(`Status Handler for event: ${event}`);
+  try {
+    logger.info(`Status Handler for event: ${event}`);
+    const resp = await alchemy.request("", "POST", status, "xml");
+    console.log(
+      "LOG:  ~ file: stream-handlers.js ~ line 52 ~ statusHandler ~ resp",
+      resp
+    );
+    await ack(streamId);
+  } catch (error) {
+    logger.error(error.message);
+  }
 };
