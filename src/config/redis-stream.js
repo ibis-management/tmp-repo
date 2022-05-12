@@ -1,73 +1,45 @@
+import Stream from "@nelreina/redis-stream-consumer";
 import { client } from "./redis-client.js";
 import logger from "../config/logger.js";
 
-const BLOCK = 30000; // For 1 minute
+const STREAM = process.env["STREAM"];
 
-const createGroup = async (key, group) => {
-  try {
-    const resp = await client.xGroupCreate(key, group, "$", {
-      MKSTREAM: true,
-    });
-    return true;
-  } catch (error) {
-    if (error.message.includes("already exists")) {
-      const info = await client.xInfoGroups(key);
-      logger.info(JSON.stringify(info));
-      return true;
-    } else {
-      logger.error(error.message);
-      return false;
-    }
-  }
-};
+const eventStream = async (appName, watchEvent, callback) => {
+  const stream = await Stream(client, STREAM, appName, { logger });
 
-const createConsumer = async (key, group, consumer) => {
-  try {
-    await client.xGroupCreateConsumer(key, group, consumer);
-    const info = await client.xInfoConsumers(key, group);
-    logger.info(JSON.stringify(info));
-    return true;
-  } catch (error) {
-    console.log(
-      "LOG:  ~ file: redis-stream.js ~ line 9 ~ error",
-      error.message
+  if (stream.listen) {
+    logger.info(
+      `"${appName}" listening to stream "${STREAM}" for "${
+        watchEvent ? "event " + watchEvent : "all events"
+      }"`
     );
-    return false;
-  }
-};
-
-export const saveRequest = async (data) => {
-  await client.xAdd("alchemy-request", "*", { payload: JSON.stringify(data) });
-};
-
-export default async (key, group, consumer, ack = true) => {
-  const groupOK = await createGroup(key, group);
-  if (!groupOK) return {};
-  const consumerOK = await createConsumer(key, group, consumer);
-  if (!consumerOK) return {};
-  const streamClient = client.duplicate();
-  await streamClient.connect();
-
-  // Start listen to stream
-  const listen = async (streamHandler) => {
-    const messages = await streamClient.xReadGroup(
-      group,
-      consumer,
-      { key, id: ">" },
-      { BLOCK, COUNT: 1 }
-    );
-    if (messages) {
-      const msg = messages[0];
-      const [payload] = msg.messages;
-      await streamHandler(payload);
-      if (ack) {
-        await streamClient.xAck(key, group, payload.id);
+    stream.listen(async (id, message, ack) => {
+      const { event, ynohubId, timestamp } = message;
+      const payload = JSON.parse(message.payload);
+      if (!watchEvent || event === watchEvent) {
+        logger.info(
+          JSON.stringify({ log: "listen", appName, event, ynohubId, timestamp })
+        );
+        await callback({ streamId: id, ynohubId, payload, ack, event });
+      } else {
+        await ack(id);
       }
+    });
+  }
+};
 
-      listen(streamHandler);
-    } else {
-      listen(streamHandler);
-    }
+export const addToStream = async (event, ynohubId, data) => {
+  logger.info(JSON.stringify({ log: "addToStream", event, ynohubId }));
+  const timestamp = new Date().toLocaleString();
+  const streamData = {
+    event,
+    ynohubId,
+    timestamp,
+    payload: JSON.stringify(data),
   };
-  return { listen };
+  await client.xAdd(STREAM, "*", streamData);
+};
+
+export const newStreamService = async (appName, event, handler) => {
+  return eventStream(appName, event, handler);
 };
