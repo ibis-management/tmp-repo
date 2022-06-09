@@ -11,14 +11,13 @@ const __dirname = path.dirname(__filename);
 const basePath = `/${HUB}`;
 
 export default (app) => {
-  logger.info(`=== public routes ===`);
   fs.readdirSync(__dirname)
     .filter(function (file) {
       return file.indexOf(".") !== 0 && file !== "index.js";
     })
     .forEach(async function (file) {
       const routePath = file.replace(".js", "");
-      logger.info(`•   ${basePath}/${routePath}`);
+      logger.info(`${basePath}/${routePath}`);
       const module = await import(path.join(__dirname, file));
 
       app.use(`${basePath}/${routePath}`, module.default);

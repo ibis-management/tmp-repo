@@ -1,13 +1,8 @@
 import axios from "axios";
 import { buildXML } from "./xml.js";
 
-export default (API) => {
-  const request = async (
-    path,
-    method = "GET",
-    optionalData = null,
-    mime = "json"
-  ) => {
+export default (API, mime = "xml") => {
+  const request = async (path, method = "GET", optionalData = null) => {
     const url = `${API}${path}`;
     const options = {
       method,
@@ -60,5 +55,11 @@ export default (API) => {
     }
   };
 
-  return { request };
+  const get = async (path, token) => await request(path, (token = token));
+  const post = async (path, data, token) =>
+    await request(path, "POST", data, token);
+  const put = async (path, data, token) =>
+    await request(path, "PUT", data, token);
+
+  return { request, get, post, put };
 };
