@@ -14,8 +14,8 @@ const publish = async (stream) => {
 
   const status = getStatus(ynohubId, "QUOTATION_RECEIVED", payload);
 
-  alchemyService.post(`/`, status);
-
+  await alchemyService.post(`/`, status);
+  logger.info(`Publish stream: ${ynohubId}`);
   stream.ack(streamId);
 };
 
